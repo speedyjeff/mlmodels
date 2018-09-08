@@ -103,7 +103,9 @@ namespace MLNet
                 C22 = raw[22],
                 C23 = raw[23],
                 C24 = raw[24],
-                C25 = raw[25]
+                C25 = raw[25],
+
+                Score = raw[26]
             };
         }
 
