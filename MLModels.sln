@@ -1,0 +1,43 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28010.2016
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MLNet", "MLNet\MLNet.csproj", "{320F0CB6-F0C2-4858-B328-BE9F89D56BE0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenCV", "OpenCV\OpenCV.csproj", "{B84AE859-16B5-4F09-9CE6-253337ABAF28}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "Common\Common.csproj", "{63078F82-5A43-4FC2-807D-7BA2E5EB320E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Driver", "Driver\Driver.csproj", "{D0A8061D-9422-49D7-8264-7E54B065F46A}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{320F0CB6-F0C2-4858-B328-BE9F89D56BE0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{320F0CB6-F0C2-4858-B328-BE9F89D56BE0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{320F0CB6-F0C2-4858-B328-BE9F89D56BE0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{320F0CB6-F0C2-4858-B328-BE9F89D56BE0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B84AE859-16B5-4F09-9CE6-253337ABAF28}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B84AE859-16B5-4F09-9CE6-253337ABAF28}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B84AE859-16B5-4F09-9CE6-253337ABAF28}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B84AE859-16B5-4F09-9CE6-253337ABAF28}.Release|Any CPU.Build.0 = Release|Any CPU
+		{63078F82-5A43-4FC2-807D-7BA2E5EB320E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{63078F82-5A43-4FC2-807D-7BA2E5EB320E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{63078F82-5A43-4FC2-807D-7BA2E5EB320E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{63078F82-5A43-4FC2-807D-7BA2E5EB320E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D0A8061D-9422-49D7-8264-7E54B065F46A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D0A8061D-9422-49D7-8264-7E54B065F46A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D0A8061D-9422-49D7-8264-7E54B065F46A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D0A8061D-9422-49D7-8264-7E54B065F46A}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {98DF6339-1045-4601-B300-C14D1530CAAF}
+	EndGlobalSection
+EndGlobal
