@@ -7,7 +7,7 @@ ML.NET's FastRegressionTree outperformed OpenCV's RandomTree, but the performanc
 
 _ |ML.NET | OpenCV
 -----|-------|-------
-X-Plat| Yes | (OpenCVSharp-AnyCPU)[https://www.nuget.org/packages/OpenCvSharp3-AnyCPU/] only has native binaries for Windows X86/X64, though OpenCV is x-plat
+X-Plat| Yes | ![OpenCVSharp-AnyCPU](https://www.nuget.org/packages/OpenCvSharp3-AnyCPU/) only has native binaries for Windows X86/X64, though OpenCV is x-plat
 Prediction Throughput | Average prediction is 3ms | Average prediction is 10us (0.01ms)
 On disk size | Small compressed | large raw text (compressable)
 Feedback | Create/destroy threads per prediction (extreme slow down when debugging, due to serializing output to the debug output window) | Cumbersome GCHandle to correctly pin input/output
