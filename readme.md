@@ -21,6 +21,7 @@ Feedback | Need for duplicated code when load, save, predict are done in seperat
 _ | STDOUT output when training | Use of [,] arrays (need to convert data often)
 _ | Not able to use intillisense to build pipeline (everything takes an ILearningPipelineItem) | Training is slow
 _ | Typically the FastTreeRegressor has better fitness than RandomTrees | 
+_ | **No option for loading Training data from a collection, must be spilled to disk first** | 
 
 
 ### Results
