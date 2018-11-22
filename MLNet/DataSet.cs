@@ -72,6 +72,36 @@ namespace MLNet
                 "C20", "C21", "C22", "C23", "C24", "C25"
             };
         }
+
+        public IEnumerable<float> ColumnValues()
+        {
+            yield return C0;
+            yield return C1;
+            yield return C2;
+            yield return C3;
+            yield return C4;
+            yield return C5;
+            yield return C6;
+            yield return C7;
+            yield return C8;
+            yield return C9;
+            yield return C10;
+            yield return C11;
+            yield return C12;
+            yield return C13;
+            yield return C14;
+            yield return C15;
+            yield return C16;
+            yield return C17;
+            yield return C18;
+            yield return C19;
+            yield return C20;
+            yield return C21;
+            yield return C22;
+            yield return C23;
+            yield return C24;
+            yield return C25;
+        }
     }
 
     public class DataSetPrediction

@@ -1,21 +1,41 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using Common;
 using Microsoft.ML;
+
+
+#if ML_LEGACY
+using Microsoft.ML.Legacy;
+using Microsoft.ML.Legacy.Data;
+using Microsoft.ML.Legacy.Trainers;
+using Microsoft.ML.Legacy.Transforms;
+#else
 using Microsoft.ML.Data;
-using Microsoft.ML.Models;
+using Microsoft.ML.Runtime.Data;
+using Microsoft.ML.Core.Data;
 using Microsoft.ML.Trainers;
 using Microsoft.ML.Transforms;
+#endif
+
+
 
 namespace MLNet
 {
     public class MLNetModel : IModel<List<DataSet>, DataSet>
     {
+        public MLNetModel()
+        {
+            Context = new MLContext();
+        }
+
         public override void Train(List<DataSet> data, List<float> labels = null)
         {
             if (TrainedModel != null) throw new InvalidOperationException("May only train/load a model once");
 
-            var pipeline = new LearningPipeline();
+#if ML_LEGACY
+             var pipeline = new LearningPipeline();
 
             // add data
             pipeline.Add(CollectionDataSource.Create(data));
@@ -32,20 +52,69 @@ namespace MLNet
 
             // train the model
             TrainedModel = pipeline.Train<DataSet, DataSetPrediction>();
+#else
+            // add data
+            var textLoader = GetTextLoader(Context);
+
+            // spill to disk !?!?! since there is no way to load from a collection
+            var pathToData = "";
+            try
+            {
+                // write data to disk
+                pathToData = WriteToDisk(data);
+
+                // read in data
+                IDataView dataView = textLoader.Read(pathToData);
+
+                // configurations
+                var dataPipeline = Context.Transforms.CopyColumns("Score", "Label")
+                    .Append(Context.Transforms.Concatenate("Features", DataSet.ColumnNames()));
+
+                // set the training algorithm
+                var trainer = Context.Regression.Trainers.FastTree(label: "Label", features: "Features");
+                var trainingPipeline = dataPipeline.Append(trainer);
+
+                TrainedModel = trainingPipeline.Fit(dataView);
+            }
+            finally
+            {
+                // cleanup
+                if (!string.IsNullOrWhiteSpace(pathToData) && File.Exists(pathToData)) File.Delete(pathToData);
+            }
+#endif
         }
 
         public override void Load(string path)
         {
             if (TrainedModel != null) throw new InvalidOperationException("May only train/load a model once");
 
+#if ML_LEGACY
             TrainedModel = PredictionModel.ReadAsync<DataSet, DataSetPrediction>(path).Result;
+#else
+            // load
+            using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
+            {
+                TrainedModel = Context.Model.Load(stream);
+            }
+
+            // create the prediction function
+            PredictFunc = TrainedModel.MakePredictionFunction<DataSet, DataSetPrediction>(Context);
+#endif
         }
 
         public override void Save(string path)
         {
             if (TrainedModel == null) throw new InvalidOperationException("Must train/load a model before saving");
 
+#if ML_LEGACY
             TrainedModel.WriteAsync(path).Wait();
+#else
+            // save
+            using (var stream = File.Create(path))
+            {
+                TrainedModel.SaveTo(Context, stream);
+            }
+#endif
         }
 
         // return r^2
@@ -55,11 +124,33 @@ namespace MLNet
 
             lock (TrainedModel)
             {
+#if ML_LEGACY
                 var testData = CollectionDataSource.Create(data);
-                var evaluator = new RegressionEvaluator();
-                var metrics = evaluator.Evaluate(TrainedModel, testData);
+                //var evaluator = new RegressionEvaluator();
+                //var metrics = evaluator.Evaluate(TrainedModel, testData);
+                return 0;
+                //return metrics.RSquared;
+#else
+                var textLoader = GetTextLoader(Context);
 
-                return metrics.RSquared;
+                var pathToData = "";
+                try
+                {
+                    // ugh have to spill data to disk for it to work!
+                    pathToData = WriteToDisk(data);
+
+                    IDataView dataView = textLoader.Read(pathToData);
+                    var predictions = TrainedModel.Transform(dataView);
+                    var metrics = Context.Regression.Evaluate(predictions, label: "Label", score: "Score");
+
+                    return metrics.RSquared;
+                }
+                finally
+                {
+                    // cleanup
+                    if (!string.IsNullOrWhiteSpace(pathToData) && File.Exists(pathToData)) File.Delete(pathToData);
+                }
+#endif
             }
         }
 
@@ -69,8 +160,13 @@ namespace MLNet
 
             lock (TrainedModel)
             {
+#if ML_LEGACY
                 var result = TrainedModel.Predict(data);
                 return result.Score;
+#else
+                var result = PredictFunc.Predict(data);
+                return result.Score;
+#endif
             }
         }
 
@@ -115,8 +211,51 @@ namespace MLNet
             return raw;
         }
 
-        #region private
+#region private
+
+#if ML_LEGACY
         private PredictionModel<DataSet, DataSetPrediction> TrainedModel;
-        #endregion
+#else
+        private MLContext Context;
+        private ITransformer TrainedModel;
+        private PredictionFunction<DataSet, DataSetPrediction> PredictFunc;
+
+        private static string WriteToDisk(List<DataSet> data)
+        {
+            // geneate a random path
+            var path = Path.Combine(Path.GetTempPath(), Path.GetTempFileName());
+
+            using (var writer = File.CreateText(path))
+            {
+                foreach (var d in data)
+                {
+                    foreach (var v in d.ColumnValues())
+                    {
+                        writer.Write(v);
+                        writer.Write(',');
+                    }
+                    writer.WriteLine(d.Score);
+                }
+            }
+
+            return path;
+        }
+
+        private static TextLoader GetTextLoader(MLContext context)
+        {
+            var index = 0;
+            var columns = DataSet.ColumnNames().Select(c => new TextLoader.Column(c, DataKind.R4, index++)).ToList();
+            columns.Add(new TextLoader.Column("Score", DataKind.R4, index));
+            return context.Data.TextReader(
+                new TextLoader.Arguments()
+                {
+                    Separator = ",",
+                    HasHeader = false,
+                    Column = columns.ToArray()
+                });
+        }
+#endif
+
+#endregion
     }
 }
