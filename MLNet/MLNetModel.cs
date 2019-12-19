@@ -13,8 +13,6 @@ using Microsoft.ML.Legacy.Trainers;
 using Microsoft.ML.Legacy.Transforms;
 #else
 using Microsoft.ML.Data;
-using Microsoft.ML.Runtime.Data;
-using Microsoft.ML.Core.Data;
 using Microsoft.ML.Trainers;
 using Microsoft.ML.Transforms;
 #endif
@@ -64,14 +62,15 @@ namespace MLNet
                 pathToData = WriteToDisk(data);
 
                 // read in data
-                IDataView dataView = textLoader.Read(pathToData);
+                IDataView dataView = textLoader.Load(pathToData);
+                InputSchema = dataView.Schema;
 
                 // configurations
-                var dataPipeline = Context.Transforms.CopyColumns("Score", "Label")
+                var dataPipeline = Context.Transforms.CopyColumns(outputColumnName: "Label", inputColumnName: nameof(DataSet.Score) )
                     .Append(Context.Transforms.Concatenate("Features", DataSet.ColumnNames()));
 
                 // set the training algorithm
-                var trainer = Context.Regression.Trainers.FastTree(label: "Label", features: "Features");
+                var trainer = Context.Regression.Trainers.Sdca(labelColumnName: "Label", featureColumnName: "Features");
                 var trainingPipeline = dataPipeline.Append(trainer);
 
                 TrainedModel = trainingPipeline.Fit(dataView);
@@ -94,11 +93,11 @@ namespace MLNet
             // load
             using (var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
             {
-                TrainedModel = Context.Model.Load(stream);
+                TrainedModel = Context.Model.Load(stream, out InputSchema);
             }
 
             // create the prediction function
-            PredictFunc = TrainedModel.MakePredictionFunction<DataSet, DataSetPrediction>(Context);
+            PredictFunc = Context.Model.CreatePredictionEngine<DataSet, DataSetPrediction>(TrainedModel, InputSchema);
 #endif
         }
 
@@ -112,7 +111,7 @@ namespace MLNet
             // save
             using (var stream = File.Create(path))
             {
-                TrainedModel.SaveTo(Context, stream);
+                Context.Model.Save(TrainedModel, InputSchema, stream);
             }
 #endif
         }
@@ -139,9 +138,9 @@ namespace MLNet
                     // ugh have to spill data to disk for it to work!
                     pathToData = WriteToDisk(data);
 
-                    IDataView dataView = textLoader.Read(pathToData);
+                    IDataView dataView = textLoader.Load(pathToData);
                     var predictions = TrainedModel.Transform(dataView);
-                    var metrics = Context.Regression.Evaluate(predictions, label: "Label", score: "Score");
+                    var metrics = Context.Regression.Evaluate(predictions, labelColumnName: "Label", scoreColumnName: "Score");
 
                     return metrics.RSquared;
                 }
@@ -218,7 +217,8 @@ namespace MLNet
 #else
         private MLContext Context;
         private ITransformer TrainedModel;
-        private PredictionFunction<DataSet, DataSetPrediction> PredictFunc;
+        private DataViewSchema InputSchema;
+        private PredictionEngine<DataSet, DataSetPrediction> PredictFunc;
 
         private static string WriteToDisk(List<DataSet> data)
         {
@@ -244,15 +244,9 @@ namespace MLNet
         private static TextLoader GetTextLoader(MLContext context)
         {
             var index = 0;
-            var columns = DataSet.ColumnNames().Select(c => new TextLoader.Column(c, DataKind.R4, index++)).ToList();
-            columns.Add(new TextLoader.Column("Score", DataKind.R4, index));
-            return context.Data.TextReader(
-                new TextLoader.Arguments()
-                {
-                    Separator = ",",
-                    HasHeader = false,
-                    Column = columns.ToArray()
-                });
+            var columns = DataSet.ColumnNames().Select(c => new TextLoader.Column(c, DataKind.Single, index++)).ToList();
+            columns.Add(new TextLoader.Column("Score", DataKind.Single, index));
+            return context.Data.CreateTextLoader(columns.ToArray(), separatorChar: ',', hasHeader: false);
         }
 #endif
 
